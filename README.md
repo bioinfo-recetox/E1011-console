@@ -44,5 +44,17 @@ at it:
   export const diskImageType = "bytes";
   ```
 
+  Currently the image is published as a
+  [GitHub Release asset](https://github.com/bioinfo-recetox/E1011-console/releases/tag/disk-image-v1)
+  on this repo (release assets aren't subject to the LFS-on-fork restriction, and are
+  served with Range support):
+  ```js
+  export const diskImageUrl = "https://github.com/bioinfo-recetox/E1011-console/releases/download/disk-image-v1/e1011_image.ext2";
+  export const diskImageType = "bytes";
+  ```
+  To publish a new version of the image, create a new release (e.g. `disk-image-v2`)
+  with `gh release create disk-image-v2 custom-disk-images/e1011_image.ext2 --title "..."`
+  and update the URL above.
+
 See build instructions for the image itself at the
 [CheerpX custom images guide](https://cheerpx.io/docs/guides/custom-images).
