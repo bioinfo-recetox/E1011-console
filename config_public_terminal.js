@@ -1,8 +1,10 @@
 // The root OS image location, change to local filepath if serving locally
 // original:
 // export const diskImageUrl = "wss://disks.webvm.io/debian_buster_large_permis_fixed_01-06-2026.ext2";
-// deployed (served from the GitHub Release, supports HTTP Range - see README.md):
-// export const diskImageUrl = "https://github.com/bioinfo-recetox/E1011-console/releases/download/disk-image-v1/e1011_image.ext2";
+// deployed (Cloudflare Pages / any other origin - goes through the CORS proxy
+// in front of the GitHub Release asset, since GitHub sends no CORS headers
+// and this would otherwise fail cross-origin - see README.md):
+// export const diskImageUrl = "https://e1011-disk-image-proxy.e1011.workers.dev";
 export const diskImageUrl = "/custom-disk-images/e1011_image.ext2";
 // The root filesystem backend type use "cloud" for serving remotely or "bytes" for serving locally
 // original:

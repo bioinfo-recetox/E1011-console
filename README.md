@@ -44,17 +44,66 @@ at it:
   export const diskImageType = "bytes";
   ```
 
-  Currently the image is published as a
+  The image is published as a
   [GitHub Release asset](https://github.com/bioinfo-recetox/E1011-console/releases/tag/disk-image-v1)
   on this repo (release assets aren't subject to the LFS-on-fork restriction, and are
-  served with Range support):
+  served with Range support). **Note:** GitHub's release storage does not send CORS
+  headers, so a browser `fetch`/`XHR` for the image fails with a CORS error from any
+  origin other than the one serving the app itself (that's fine for local dev, where
+  nginx serves both from `localhost`, but not for a deployed app on a different
+  origin, e.g. Cloudflare Pages). For a cross-origin deployment, go through the CORS
+  proxy Worker instead (see "Deploying to Cloudflare Pages" below):
   ```js
-  export const diskImageUrl = "https://github.com/bioinfo-recetox/E1011-console/releases/download/disk-image-v1/e1011_image.ext2";
+  export const diskImageUrl = "https://e1011-disk-image-proxy.e1011.workers.dev";
   export const diskImageType = "bytes";
   ```
   To publish a new version of the image, create a new release (e.g. `disk-image-v2`)
   with `gh release create disk-image-v2 custom-disk-images/e1011_image.ext2 --title "..."`
-  and update the URL above.
+  and update `cf-disk-image-proxy/worker.js`'s `UPSTREAM` constant + redeploy the proxy.
 
 See build instructions for the image itself at the
 [CheerpX custom images guide](https://cheerpx.io/docs/guides/custom-images).
+
+## Deploying to Cloudflare Pages
+
+The app is deployed as a static site on Cloudflare Pages (free tier — the whole
+build is ~12MB since CheerpX itself is fetched from Leaning Technologies' CDN at
+runtime, not bundled here):
+
+- **Live URL**: https://e1011-console.pages.dev
+- **Cloudflare project**: `e1011-console` (account: popovici@bioxlab.org)
+
+CheerpX requires cross-origin isolation, so the deployed site must send these
+response headers on every request — done via the [`_headers`](_headers) file
+(Cloudflare Pages' convention for per-path custom headers), copied into the build
+output by `vite.config.js`'s `viteStaticCopy` config:
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Resource-Policy: cross-origin
+```
+
+### Disk image CORS proxy
+
+The deployed app fetches the disk image from a different origin than the one
+serving it, and GitHub's release storage sends no CORS headers (see above), so
+[`cf-disk-image-proxy/`](cf-disk-image-proxy) is a small standalone Cloudflare
+Worker that proxies the GitHub Release asset and adds the required
+`Access-Control-Allow-Origin` (and Range passthrough) headers, without
+duplicating the 640MB file into a second storage backend:
+- **Live URL**: https://e1011-disk-image-proxy.e1011.workers.dev
+- **Worker name**: `e1011-disk-image-proxy`
+
+### Redeploying
+
+```bash
+# App (from the repo root) — builds with the CORS-proxy disk URL, deploys, then
+# reverts config_public_terminal.js back to the local-dev default:
+sed -i 's|^export const diskImageUrl = "/custom-disk-images/e1011_image.ext2";$|export const diskImageUrl = "https://e1011-disk-image-proxy.e1011.workers.dev";|' config_public_terminal.js
+npm run build
+npx wrangler pages deploy build --project-name=e1011-console --branch=main
+git checkout -- config_public_terminal.js
+
+# CORS proxy Worker (only needed if worker.js changes or the image release URL changes)
+cd cf-disk-image-proxy && npx wrangler deploy
+```

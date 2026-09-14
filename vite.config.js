@@ -20,6 +20,7 @@ export default defineConfig({
 				{ src: 'scrollbar.css', dest: '' },
 				{ src: 'serviceWorker.js', dest: '' },
 				{ src: 'login.html', dest: '' },
+				{ src: '_headers', dest: '' },
 				{ src: 'assets/', dest: '' },
 				{ src: 'documents/', dest: '' }
 			]
