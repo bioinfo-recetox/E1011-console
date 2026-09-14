@@ -301,7 +301,7 @@
 			// The Linux 'sysfs' filesystem which is used to enumerate emulated devices
 			{type:"sys", path:"/sys"},
 			// Convenient access to sample documents in the user directory
-			{type:"dir", dev:documentsDevice, path:"/home/user/documents"}
+			{type:"dir", dev:documentsDevice, path:configObj.opts.cwd + "/documents"}
 		];
 		try
 		{
