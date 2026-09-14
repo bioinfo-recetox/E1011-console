@@ -1,0 +1,28 @@
+FROM --platform=linux/386 docker.io/i386/debian:buster
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Point APT to the archived mirrors (Buster is EOL)
+RUN echo "deb [trusted=yes] http://archive.debian.org/debian buster main contrib non-free" \
+  > /etc/apt/sources.list && \
+	echo "deb [trusted=yes] http://archive.debian.org/debian-security buster/updates main" \
+	>> /etc/apt/sources.list
+
+RUN apt-get clean && apt-get update && apt-get -y upgrade
+RUN apt-get -y install apt-utils gcc \
+	python3 vim unzip ruby nodejs \
+	fakeroot dbus base whiptail hexedit \
+	patch wamerican ucf manpages \
+	file luajit make lua5.3 dialog curl \
+	less cowsay netcat-openbsd \
+	wget sudo mc nano
+
+RUN useradd -m student && echo "student:password" | chpasswd
+COPY --chown=student:student ./examples /home/student/examples
+COPY --chown=student:student ./data /home/student/data
+RUN chmod -R +x  /home/student/examples/lua
+# We set WORKDIR, as this gets extracted by Webvm to be used as the cwd. This is optional.
+WORKDIR /home/student/
+# We set env, as this gets extracted by Webvm. This is optional.
+ENV HOME="/home/student" TERM="xterm" USER="student" SHELL="/bin/bash" EDITOR="nano" LANG="C.UTF-8"
+RUN echo 'root:password' | chpasswd
+CMD [ "/bin/bash" ]

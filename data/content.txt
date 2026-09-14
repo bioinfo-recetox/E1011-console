@@ -1,0 +1,4 @@
+dat/samples.csv
+omics/SRR.fastq
+omics/sequences.fasta
+omics/variants.vcf
